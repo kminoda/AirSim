@@ -735,6 +735,7 @@ void AirsimROSWrapper::drone_state_timer_cb(const ros::TimerEvent& event)
 
         // todo this is global origin
         origin_geo_point_pub_.publish(origin_geo_point_msg_);
+
         // iterate over drones
         for (auto& multirotor_ros: multirotor_ros_vec_)
         {
@@ -742,7 +743,10 @@ void AirsimROSWrapper::drone_state_timer_cb(const ros::TimerEvent& event)
             std::unique_lock<std::recursive_mutex> lck(drone_control_mutex_);
             multirotor_ros.curr_drone_state = airsim_client_.getMultirotorState(multirotor_ros.vehicle_name);
             lck.unlock();
-            ros::Time curr_ros_time = ros::Time::now();
+            // multirotor_ros.curr_drone_state = curr_drone_state_map[multirotor_ros.vehicle_name];
+
+            // ros::Time curr_ros_time = ros::Time::now();
+            ros::Time curr_ros_time = make_ts(multirotor_ros.curr_drone_state.timestamp);
 
             // convert airsim drone state to ROS msgs
             multirotor_ros.curr_odom_ned = get_odom_msg_from_airsim_state(multirotor_ros.curr_drone_state);
@@ -780,6 +784,7 @@ void AirsimROSWrapper::drone_state_timer_cb(const ros::TimerEvent& event)
                 std::unique_lock<std::recursive_mutex> lck(drone_control_mutex_);
                 auto imu_data = airsim_client_.getImuData(vehicle_imu_pair.second, vehicle_imu_pair.first);
                 lck.unlock();
+                // auto imu_data = imu_data_map[vehicle_imu_pair.first];
                 sensor_msgs::Imu imu_msg = get_imu_msg_from_airsim(imu_data);
                 imu_msg.header.frame_id = vehicle_imu_pair.first;
                 // imu_msg.header.stamp = ros::Time::now();
